@@ -1,9 +1,10 @@
-// Dati iniziali: solo cose vere (scuola provvisoria, tennis, British).
+// Dati iniziali: solo cose vere (orario scolastico, tennis, British).
 // Tutto è modificabile o eliminabile dall'app.
 
 import { startOfWeek, todayISO } from '../lib/dates.js'
+import { schoolActivities } from './schoolTimetable.js'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export function defaultCategories() {
   return [
@@ -27,7 +28,7 @@ export function seedState(now = new Date()) {
     version: SCHEMA_VERSION,
     categories: defaultCategories(),
     activities: [
-      { id: 'act_scuola', title: 'Scuola', categoryId: 'scuola', kind: 'lezione', notes: 'Orario provvisorio: da aggiornare con quello vero', date: monday, start: '08:00', end: '14:00', repeat: weekly([0, 1, 2, 3, 4]), cost: null, exceptions: {} },
+      ...schoolActivities(monday),
       { id: 'act_tennis_lv', title: 'Allenamento', categoryId: 'tennis', notes: '', date: monday, start: '18:20', end: '20:00', repeat: weekly([0, 4]), cost: null, exceptions: {} },
       { id: 'act_tennis_me', title: 'Allenamento', categoryId: 'tennis', notes: '', date: monday, start: '19:10', end: '20:00', repeat: weekly([2]), cost: null, exceptions: {} },
       { id: 'act_british', title: 'British', categoryId: 'british', notes: '', date: monday, start: '15:00', end: '16:15', repeat: weekly([1]), cost: null, exceptions: {} },

@@ -5,6 +5,8 @@
 // metodi (load/save) e cambiare l'export in fondo: il resto dell'app non cambia.
 
 import { SCHEMA_VERSION } from './seed.js'
+import { schoolActivities } from './schoolTimetable.js'
+import { addDays as addDaysISO, startOfWeek, todayISO } from '../lib/dates.js'
 
 const KEY = 'rgdeck:data:v1'
 
@@ -29,13 +31,23 @@ export const localRepo = {
   },
 }
 
-export function migrate(data) {
+export function migrate(data, now = new Date()) {
   if (!data || typeof data !== 'object') return null
-  // versione 1: nessuna migrazione ancora necessaria
+  let activities = data.activities || []
+  // v1 → v2: il blocco "Scuola 8–14" provvisorio diventa l'orario vero.
+  // Si sostituisce solo se è ancora quello provvisorio (note intatte).
+  if ((data.version || 1) < 2) {
+    const old = activities.find((a) => a.id === 'act_scuola' && /provvisorio/i.test(a.notes || ''))
+    if (old) {
+      const monday = startOfWeek(todayISO(now))
+      const ended = old.date < monday ? [{ ...old, repeat: { ...old.repeat, until: addDaysISO(monday, -1) } }] : []
+      activities = [...activities.filter((a) => a !== old), ...ended, ...schoolActivities(monday)]
+    }
+  }
   return {
     version: SCHEMA_VERSION,
     categories: data.categories || [],
-    activities: data.activities || [],
+    activities,
     todos: data.todos || [],
     expenses: data.expenses || [],
     recurringExpenses: data.recurringExpenses || [],

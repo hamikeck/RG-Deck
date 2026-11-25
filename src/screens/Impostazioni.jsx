@@ -86,7 +86,7 @@ export default function Impostazioni({ openCategory, back, toast }) {
           </div>
         )}
       </section>
-      <p className="sub small foot-note">R.G DECK · v1.0</p>
+      <p className="sub small foot-note">R.G DECK · v1.1</p>
     </div>
   )
 }

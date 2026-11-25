@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { deleteOccurrence, editOccurrence, occurrenceCost, occurrencesBetween, occurrencesOn } from './recurrence.js'
 import { expensesBetween, sum, weekStats } from './stats.js'
 import { seedState } from '../data/seed.js'
+import { migrate } from '../data/repo.js'
 import { isoWeekNumber, startOfWeek, weekday } from './dates.js'
 
 const MON = '2026-11-23'
@@ -66,13 +67,35 @@ describe('ricorrenze', () => {
   })
 })
 
+describe('migrazione orario', () => {
+  it('sostituisce il blocco provvisorio e conserva il resto', () => {
+    const old = seedState(new Date(2026, 10, 25))
+    const v1 = { ...old, version: 1, activities: [
+      { id: 'act_scuola', title: 'Scuola', categoryId: 'scuola', kind: 'lezione', notes: 'Orario provvisorio: da aggiornare con quello vero', date: '2026-11-16', start: '08:00', end: '14:00', repeat: { freq: 'weekly', days: [0, 1, 2, 3, 4] }, cost: null, exceptions: {} },
+      ...old.activities.filter((a) => a.categoryId !== 'scuola'),
+    ] }
+    const m = migrate(v1, new Date(2026, 10, 25))
+    expect(m.version).toBe(2)
+    expect(occurrencesOn(m.activities, '2026-11-20').filter((o) => o.categoryId === 'scuola')).toHaveLength(1)
+    expect(m.activities.filter((a) => a.categoryId === 'tennis')).toHaveLength(2)
+    // già migrato: non cambia niente
+    expect(migrate(m, new Date(2026, 10, 25)).activities).toHaveLength(m.activities.length)
+  })
+})
+
 describe('dati iniziali e statistiche', () => {
   it('settimana tipo', () => {
     const s = seedState(new Date(2026, 10, 25, 9, 0))
     const wk = occurrencesBetween(s.activities, MON, '2026-11-29')
     expect(wk.filter((o) => o.categoryId === 'tennis')).toHaveLength(3)
     expect(wk.filter((o) => o.categoryId === 'british').map((o) => o.date)).toEqual(['2026-11-24'])
-    expect(wk.filter((o) => o.categoryId === 'scuola')).toHaveLength(5)
+    const school = wk.filter((o) => o.categoryId === 'scuola')
+    expect(school).toHaveLength(27)
+    const mon = school.filter((o) => o.date === MON).map((o) => `${o.start} ${o.title}`)
+    expect(mon).toEqual(['08:00 Storia', '09:00 Matematica', '11:00 Scienze motorie', '12:00 Discipline sportive'])
+    const thu = occurrencesOn(s.activities, '2026-11-26').filter((o) => o.categoryId === 'scuola')
+    expect(thu.map((o) => o.title)).toEqual(['Italiano', 'Religione', 'Inglese', 'Scienze naturali', 'Fisica'])
+    expect(thu[0]).toMatchObject({ start: '08:00', end: '10:00', notes: 'Prof. G. Di Dona' })
     const st = weekStats(s, '2026-11-25', 9 * 60)
     expect(st.tennis).toMatchObject({ done: 1, total: 3 })
   })
