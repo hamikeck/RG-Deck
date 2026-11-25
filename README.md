@@ -20,7 +20,7 @@ Stack: React 19 + Vite, `vite-plugin-pwa` per manifest e service worker, Vitest 
 src/
   App.jsx                 navigazione (barra in basso sul telefono, barra laterale da 960px in su) e fogli
   data/
-    seed.js               dati iniziali: categorie, scuola (provvisoria), tennis, British
+    seed.js               dati iniziali: categorie, orario scolastico, tennis, British
     repo.js               dove si salvano i dati (oggi localStorage, domani Supabase)
     store.jsx             stato dell'app e azioni (aggiungi, modifica, elimina…)
   lib/
